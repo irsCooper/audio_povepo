@@ -20,6 +20,7 @@ class YandexInfo(BaseModel):
 class Settings(BaseSettings):
     echo: bool = True 
     yandex: YandexInfo = YandexInfo()
+    db_url: str = os.environ.get('DB_URL')
 
 
 settings = Settings()
