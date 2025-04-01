@@ -11,7 +11,7 @@ router = APIRouter(
 
 
 @router.get("/PreSignIn")
-def get_yandex_url():
+def get_yandex_authorise_url():
     """
     Для авторизации через Яндекс необходимо перейти по этой ссылке и подтвердить действие.\n
     Вас перенаправит на по адресу http://localhost:8080/SignIn (то есть, будетвызван метод авторизации).\n 
@@ -26,6 +26,9 @@ def sign_in(
     code: str = Query(..., description="Authorization code from Yandex"),
     cid: str = Query(..., description="Client ID (from query parameters)")
 ):
+    """
+    Для получения необходимых данных выполните метод '/Authentication/PreSignIn'
+    """
     data = {
         "grant_type": "authorization_code",
         "code": code,
@@ -38,17 +41,18 @@ def sign_in(
     response = requests.post(settings.yandex.token_url, data=data)
 
     if response.status_code == 200:
-        return response.json() 
+        tokens_info = response.json()
+
+        
     
     return {"error": "Failed to get access token", "details": response.json()}
 
 @router.get("/YandexUserInfo")
-def get_user_info(access_token: str = Query(...)):
+def get_yandex_user_info(access_token: str = Query(...)):
     """ Получение данных пользователя по access_token """
-    url = "https://login.yandex.ru/info"
     headers = {"Authorization": f"bearer {access_token}"}
 
-    response = requests.get(url, headers=headers)
+    response = requests.get(settings.yandex.yandex_info_url, headers=headers)
 
     if response.status_code == 200:
         return response.json()

@@ -15,6 +15,7 @@ class YandexInfo(BaseModel):
     client_secret: str = os.environ.get('YANDEX_CLIENT_SECRET')
     redirect_url: str = os.environ.get('YANDEX_REDIRECT_URL')
     token_url: str = os.environ.get('TOKEN_URL')
+    yandex_info_url: str = os.environ.get('TOKEN_URL')
 
 class Settings(BaseSettings):
     echo: bool = True 
