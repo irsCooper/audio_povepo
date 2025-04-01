@@ -13,7 +13,6 @@ class RoleSchema(BaseModel):
 
 class UserDB(BaseModel):
     id: uuid.UUID
-    client_id: uuid.UUID
     display_name: str
     real_name: str
     first_name: str
@@ -27,7 +26,6 @@ class UserDB(BaseModel):
 
 
 class UserCreate(BaseModel):
-    client_id: uuid.UUID
     display_name: str
     real_name: str
     first_name: str
