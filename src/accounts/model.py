@@ -2,7 +2,7 @@ import uuid
 from sqlalchemy import UUID, ForeignKey, Integer, String, Boolean
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 
-from ..base_model import BaseModel
+from src.base_model import BaseModel
 
 
 
