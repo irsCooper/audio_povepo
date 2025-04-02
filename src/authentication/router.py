@@ -2,27 +2,27 @@ from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 
+from src.accounts.model import UserModel
 from src.authentication.schemas import TokenInfo
 from src.core.config import settings
 from src.core.db_helper import db
 from src.authentication.service import AuthService
-from src.dependencies import get_current_role, http_bearer, get_current_auth_access, get_current_auth_refresh
+from src.dependencies import http_bearer, get_current_auth_access
+
 
 router = APIRouter(
     prefix="/Authentication", 
     tags=["Authentication"],
-    dependencies=[Depends(http_bearer)]
 )
-
 
 
 @router.get("/PreSignIn")
 async def get_yandex_authorise_url():
     """
-    Для авторизации через Яндекс необходимо перейти по этой ссылке и подтвердить действие.\n
-    Вас перенаправит на по адресу http://localhost:8080/SignIn (то есть, будетвызван метод авторизации).\n 
-    На странице вы увидите ответ от сервера, если всё прошло успешно 
-    TODO 
+    Для авторизации через Яндекс необходимо перейти по ссылке, которую вы увидите при вызове метода и подтвердить действие на открывшейся странице.\n
+    Даллее вас перенаправит на по адресу http://localhost:8080/SignIn (то есть, будет вызван метод авторизации в нашей системе).\n 
+    На открывшейся странице вы увидите ответ от сервера, не спешите закрывать страницу.\n 
+    Читайте инструкцию по взаимдействию в файле README.md в корне проекта
     """
     return f"https://oauth.yandex.ru/authorize?response_type=code&client_id={settings.yandex.client_id}"
 
@@ -30,7 +30,6 @@ async def get_yandex_authorise_url():
 @router.get("/SignIn", response_model=TokenInfo)
 async def sign_in(
     code: str = Query(..., description="Authorization code from Yandex"),
-    # cid: str = Query(..., description="Client ID (from query parameters)"),
     session: AsyncSession = Depends(db.session_dependency)
 ):
     """
@@ -42,8 +41,12 @@ async def sign_in(
 @router.post("/Refresh", status_code=status.HTTP_200_OK, response_model=TokenInfo)
 async def refresh_token(
     refresh_token: str,
+    user: UserModel = Depends(get_current_auth_access),
     session: AsyncSession = Depends(db.session_dependency)
 ):
+    """
+    Обновление access и refresh токенов
+    """
     return await AuthService.refresh_tokens(refresh_token, session)
 
 
