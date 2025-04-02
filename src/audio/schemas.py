@@ -3,7 +3,6 @@ from pydantic import BaseModel, ConfigDict
 
 
 class AudioSchema(BaseModel):
-    id: uuid.UUID
     filename: str
     file_path: str
     user_id: uuid.UUID
