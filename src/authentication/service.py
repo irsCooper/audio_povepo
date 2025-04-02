@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import Optional
 import uuid
 from fastapi import HTTPException
@@ -10,17 +10,17 @@ from src.authentication.dao import RefreshTokenDAO
 from src.accounts.dao import UserDAO
 from src.accounts.model import UserModel
 from src.accounts.service import UserService
-from src.authentication.schemas import RefreshCreate, TokenInfo
-from src.authentication.utils import ACCESS_TOKEN_TYPE, REFRESH_TOKEN_TYPE, decode_jwt
-from src.dependencies import create_token_of_type, get_current_auth_user_of_type_token, validate_token_type
+from src.authentication.schemas import RefreshCreate, RefreshUpdate, TokenInfo
+from src.authentication.utils import ACCESS_TOKEN_TYPE, REFRESH_TOKEN_TYPE
+from src.dependencies import create_token_of_type, get_current_auth_user_of_type_token
 from src.exceptions.AuthExceptions import InvalidCredentialsException
 from src.accounts.schemas import ROLE_USER, UserCreate
 from src.core.config import settings
 
 
 class AuthService:
-    @classmethod
-    async def get_auth_tokens_by_yandex(cls, code: str):
+    @staticmethod
+    async def get_auth_tokens_by_yandex(code: str):
         data = {
             "grant_type": "authorization_code",
             "code": code,
@@ -41,8 +41,8 @@ class AuthService:
             )
         
 
-    @classmethod
-    async def get_user_info_by_yandex(cls, access_token: str):
+    @staticmethod
+    async def get_user_info_by_yandex(access_token: str):
         response = requests.get(
             settings.yandex.yandex_info_url, 
             headers={"Authorization": f"bearer {access_token}"}
@@ -52,9 +52,9 @@ class AuthService:
             return response.json()
         
         raise HTTPException(
-                status_code=response.status_code,
-                detail=response.json()
-            )
+            status_code=response.status_code,
+            detail=response.json()
+        )
 
 
     @classmethod
@@ -64,14 +64,32 @@ class AuthService:
         refresh_id = uuid.uuid4()
         refresh_token = await create_token_of_type(REFRESH_TOKEN_TYPE, user, refresh_id)
         
-        await RefreshTokenDAO.add(
+        refresh_model: RefreshModel = await RefreshTokenDAO.find_one_or_none(
             session,
-            RefreshCreate(
-                reftesh_token=refresh_token,
-                expire_in=int((datetime.utcnow() + timedelta(days=settings.auth_jwt.refresh_token_expire_days)).timestamp()),
-            )
+            RefreshModel.user_id == user.id
         )
-        
+
+        if not refresh_model:
+            await RefreshTokenDAO.add(
+                session,
+                RefreshCreate(
+                    id=refresh_id,
+                    refresh_token=refresh_token,
+                    expire_in=settings.auth_jwt.refresh_token_expire_days * 24 * 60,
+                    user_id=user.id
+                )
+            )
+        else:
+            await RefreshTokenDAO.update(
+                session,
+                RefreshModel.user_id == user.id,
+                obj_in=RefreshUpdate(
+                    id=refresh_model.id,
+                    refresh_token=refresh_token,
+                    creates_at=datetime.now(),
+                )
+            )
+
         await session.commit()
 
         return TokenInfo(
@@ -85,7 +103,7 @@ class AuthService:
         cls, 
         user_info: dict, 
         session: AsyncSession
-    ): 
+    ) -> Optional[UserModel]: 
         return await UserService.create_user(
             user_in=UserCreate(
                 login=user_info["login"],
@@ -118,21 +136,14 @@ class AuthService:
             )
 
             if not user:
-                user = await cls.sign_up(user_info, session)
+                user: UserModel = await cls.sign_up(user_info, session)
 
-            # TODO
-        except:
-            raise
-
-
-
-    @classmethod
-    async def validate_access_token(cls, access_token: str):
-        try: 
-            return await decode_jwt(access_token)
+            if user:
+                return await cls.create_token(user, session)
+            
+            raise InvalidCredentialsException
         except Exception as e:
-            print(e)
-            return None
+            raise e
         
     
     @classmethod

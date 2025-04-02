@@ -4,8 +4,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import selectinload
 from typing import Any, Dict, Optional, Union
 
-from exceptions import DatabaseException
-from exceptions.DatabaseException import UnknowanDatabaseException
+from src.exceptions.DatabaseException import DatabaseException, UnknowanDatabaseException
 from src.authentication.model import RefreshModel, YandexSession
 from src.authentication.schemas import RefreshCreate, RefreshUpdate, YandexSessionCreate, YandexSessionUpdate
 from src.base_dao import BaseDAO

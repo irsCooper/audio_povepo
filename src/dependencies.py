@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import datetime, timedelta
 from typing import Optional
 import uuid
 from fastapi import Depends, HTTPException, status
@@ -12,6 +12,7 @@ from src.accounts.model import UserModel
 from src.authentication.utils import ACCESS_TOKEN_TYPE, REFRESH_TOKEN_TYPE, TOKEN_TYPE_FIELD, decode_jwt, encode_jwt
 from src.core.config import settings
 from src.core.db_helper import db
+
 
 http_bearer = HTTPBearer(auto_error=False)
 
@@ -82,7 +83,7 @@ async def get_user_by_token_sub(
     session: AsyncSession
 ) -> Optional[UserModel]:
     user_id = payload.get("sub")
-    user: UserModel = UserService.get_user(user_id=user_id, session=session) 
+    user: UserModel = await UserService.get_user(user_id=user_id, session=session) 
     if user:
         return user 
     raise HTTPException(
@@ -92,12 +93,16 @@ async def get_user_by_token_sub(
 
 
 async def get_current_auth_user_of_type_token(
-    token: str,
+    token: str | bytes,
     token_type: str,
     session: AsyncSession
 ):
     try:
         payload: dict = await decode_jwt(token)
+        
+        if payload["exp"] - int(datetime.now().timestamp()) < 0:
+            raise 
+
         await validate_token_type(
             payload=payload,
             token_type=token_type
@@ -110,14 +115,14 @@ async def get_current_auth_user_of_type_token(
     except jwt.InvalidTokenError as e:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="invalid token error"
+            detail=f"invalid token: {e}"
         )
 
 
 
 def get_current_auth_user(token_type: str) -> Optional[UserModel]:
     async def get_auth_user_from_token(
-        token: str = Depends(http_bearer),
+        token: str | bytes = Depends(http_bearer),
         session: AsyncSession = Depends(db.session_dependency),
     ):
         return await get_current_auth_user_of_type_token(
@@ -137,10 +142,8 @@ async def get_current_role(
     name_role: str,
     user: UserModel
 ): 
-    for i in range(len(user.roles)):
-            for j in range(len(name_role)):
-                if user.roles[i].name_role == name_role[j]:
-                    return
+    if any(role.name_role in name_role for role in user.roles):
+        return
                 
     raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,

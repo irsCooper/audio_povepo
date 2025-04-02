@@ -1,6 +1,6 @@
 from datetime import datetime
-from fastapi.security import HTTPBearer
 import uuid
+from fastapi.security import HTTPAuthorizationCredentials
 import jwt
 
 from src.core.config import settings
@@ -18,8 +18,7 @@ async def encode_jwt(
         expire_minutes: int = settings.auth_jwt.access_token_expire_minutes
 ):
     to_encode = payload.copy()
-    now = datetime.utcnow()
-    print(expire_minutes)
+    now = datetime.now()
     
     to_encode.update(
         exp=now + expire_minutes,
@@ -40,6 +39,9 @@ async def decode_jwt(
         public_key: str = settings.auth_jwt.public_key_path.read_text(),
         algorithms: str = settings.auth_jwt.algorithms
 ):
+    if isinstance(token, HTTPAuthorizationCredentials):
+        token = token.credentials
+
     decoded = jwt.decode(
         jwt=token,
         key=public_key,
