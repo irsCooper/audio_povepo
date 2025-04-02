@@ -27,10 +27,11 @@ class AuthJWT(BaseModel):
 
 
 class Settings(BaseSettings):
-    echo: bool = True 
+    echo: bool = False 
     auth_jwt: AuthJWT = AuthJWT()
     yandex: YandexInfo = YandexInfo()
     db_url: str = os.environ.get('DB_URL')
+    audio_path: Path = BASE_DIR / "audio"
 
 
 settings = Settings()

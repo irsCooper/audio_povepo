@@ -15,7 +15,18 @@ services:
     networks:
       - work
 
-
+  audio_povepo:
+    build:
+      context: ./
+    container_name: audio_povepo
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+    env_file:
+      - ./.env
+    networks:
+      - work
 
 
 networks:
