@@ -31,6 +31,7 @@ class UserModel(BaseModel):
     __tablename__ = 'users'
     
     id: Mapped[uuid.UUID] = mapped_column(UUID, primary_key=True, default=uuid.uuid4)
+    login: Mapped[str] = mapped_column(String, nullable=False)
     display_name: Mapped[str] = mapped_column(String, nullable=False)
     real_name: Mapped[str] = mapped_column(String, nullable=False) 
     first_name: Mapped[str] = mapped_column(String, nullable=False) 
