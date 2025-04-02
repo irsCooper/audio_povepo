@@ -4,6 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from src.authentication.router import router as router_authentication
+from src.accounts.router import router as router_accounts
 
 import uvicorn
 
@@ -14,6 +15,7 @@ app = FastAPI(
 )
 
 app.include_router(router_authentication)
+app.include_router(router_accounts)
 
 app.add_middleware(
     CORSMiddleware,

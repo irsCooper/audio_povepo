@@ -11,7 +11,7 @@ class RoleSchema(BaseModel):
     name_role: str
 
 
-class UserDB(BaseModel):
+class UserSchema(BaseModel):
     id: uuid.UUID
     login: str
     display_name: str
