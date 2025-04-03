@@ -6,7 +6,7 @@ from src.base_model import BaseModel
 
 
 class AudioModel(BaseModel):
-    __tablename__ = 'audio_session'
+    __tablename__ = 'audios_info'
 
     filename: Mapped[str] = mapped_column(String, primary_key=True, index=True)
     file_path: Mapped[str] = mapped_column(String, nullable=False)

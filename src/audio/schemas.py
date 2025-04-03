@@ -2,17 +2,16 @@ import uuid
 from pydantic import BaseModel, ConfigDict
 
 
-class AudioSchema(BaseModel):
+class Audio(BaseModel):
     filename: str
     file_path: str
-    user_id: uuid.UUID
 
+
+class AudioSchema(Audio):
     model_config = ConfigDict(from_attributes=True)
 
 
-class AudioCreate(BaseModel):
-    filename: str
-    file_path: str
+class AudioCreate(Audio):
     user_id: uuid.UUID
 
 
