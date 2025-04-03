@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from src.authentication.router import router as router_authentication
 from src.accounts.router import router as router_accounts
+from src.audio.router import router as router_audio
 
 import uvicorn
 
@@ -16,6 +17,7 @@ app = FastAPI(
 
 app.include_router(router_authentication)
 app.include_router(router_accounts)
+app.include_router(router_audio)
 
 app.add_middleware(
     CORSMiddleware,
