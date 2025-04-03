@@ -115,7 +115,7 @@ async def get_current_auth_user_of_type_token(
     except jwt.InvalidTokenError as e:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=f"invalid token: {e}"
+            detail=f"invalid token"
         )
 
 
